@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy Builder Template</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FAFAF9; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .section-body { display: none; }
+    .section-body.open { display: block; }
+    .chevron-icon { transition: transform 0.2s; }
+    .chevron-icon.rotated { transform: rotate(180deg); }
+    .draft-line { margin-bottom: 2px; }
+    textarea:focus { outline: none; border-color: #171717; }
+    input:focus { outline: none; border-color: #171717; }
+    select:focus { outline: none; }
+    .modal-overlay { display: none; }
+    .modal-overlay.open { display: flex; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 2px; }
+  </style>
+</head>
+<body class="min-h-screen text-neutral-900">
+
+<!-- TOP BAR -->
+<header class="h-14 border-b border-neutral-200 bg-white flex items-center justify-between px-4 sticky top-0 z-10">
+  <div class="flex items-center gap-3">
+    <button class="p-1.5 hover:bg-neutral-100 rounded-md">
+      <i data-lucide="chevron-left" class="w-4 h-4 text-neutral-700"></i>
+    </button>
+    <h1 class="text-[15px] font-semibold text-neutral-900">[Rewards] Rewards Issue</h1>
+    <span class="text-[11px] font-medium px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded">Auto-Saved</span>
+    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-neutral-400"></i>
+  </div>
+  <div class="flex items-center gap-2">
+    <button class="px-3 h-8 text-[13px] font-medium border border-neutral-200 rounded-md hover:bg-neutral-50">Preview</button>
+    <button class="px-3 h-8 text-[13px] font-medium border border-neutral-200 rounded-md hover:bg-neutral-50 flex items-center gap-1.5">
+      <i data-lucide="clock" class="w-3.5 h-3.5"></i> Versions
+    </button>
+    <button class="px-3 h-8 text-[13px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800">Publish version</button>
+  </div>
+</header>
+
+<!-- CHANNEL TABS -->
+<div class="border-b border-neutral-200 bg-white px-4 flex items-center gap-1">
+  <button class="h-10 px-3 text-[13px] font-medium flex items-center gap-1.5 border-b-2 border-neutral-900 text-neutral-900 -mb-px">Widget</button>
+  <button class="h-10 px-3 text-[13px] font-medium flex items-center gap-1.5 border-b-2 border-transparent text-neutral-500 hover:text-neutral-700 -mb-px">Email</button>
+  <button class="h-10 px-3 text-[13px] font-medium flex items-center gap-1.5 border-b-2 border-transparent text-neutral-500 hover:text-neutral-700 -mb-px">API</button>
+  <button class="h-10 px-3 text-[13px] font-medium flex items-center gap-1.5 border-b-2 border-transparent text-neutral-500 hover:text-neutral-700 -mb-px">Slack</button>
+  <button class="h-10 px-3 text-[13px] font-medium flex items-center gap-1.5 border-b-2 border-transparent text-neutral-500 hover:text-neutral-700 -mb-px">Assist</button>
+</div>
+
+<!-- BODY -->
+<div class="flex">
+
+  <!-- MAIN CANVAS -->
+  <main class="flex-1 px-10 py-8 max-w-[920px]">
+
+    <!-- Heading -->
+    <div class="flex items-start justify-between mb-1">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-white"></i>
+        </div>
+        <h2 class="text-[20px] font-semibold tracking-tight">Autoflow policy</h2>
+        <span class="text-[10px] font-semibold px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded uppercase tracking-wide">Template</span>
+      </div>
+      <button class="text-[12px] text-neutral-500 hover:text-neutral-700 underline underline-offset-2">Switch to blank policy</button>
+    </div>
+    <p class="text-[13px] text-neutral-500 mb-6 max-w-[560px]">Build your policy using the 4C structure. Add notes about your process in each section, then generate a polished draft using your inputs and connected actions.</p>
+
+    <!-- Progress strip -->
+    <div class="mb-6 p-3 bg-white border border-neutral-200 rounded-lg flex items-center gap-4">
+      <div class="flex items-center gap-1.5">
+        <div id="progress-badge" class="w-7 h-7 rounded-full bg-neutral-900 text-white text-[11px] font-semibold flex items-center justify-center">0/4</div>
+        <span class="text-[13px] font-medium text-neutral-700">Sections drafted</span>
+      </div>
+      <div class="flex-1 flex gap-1" id="progress-bars">
+        <div id="bar-objective" class="h-1 flex-1 rounded-full bg-neutral-200"></div>
+        <div id="bar-context" class="h-1 flex-1 rounded-full bg-neutral-200"></div>
+        <div id="bar-instructions" class="h-1 flex-1 rounded-full bg-neutral-200"></div>
+        <div id="bar-rules" class="h-1 flex-1 rounded-full bg-neutral-200"></div>
+      </div>
+      <button onclick="openFormatting()" class="text-[12px] font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1.5 px-2 py-1 rounded hover:bg-neutral-100">
+        <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Formatting
+      </button>
+      <button onclick="openActionPicker()" class="text-[12px] font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1.5 px-2 py-1 rounded hover:bg-neutral-100">
+        <i data-lucide="zap" class="w-3.5 h-3.5"></i> <span id="tools-label">Tools (2)</span>
+      </button>
+    </div>
+
+    <!-- SECTIONS -->
+    <div class="space-y-3" id="sections-container"></div>
+
+    <!-- Final banner (hidden until all 4 done) -->
+    <div id="final-banner" class="hidden mt-6 p-4 bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 text-violet-700"></i>
+          <span class="text-[13px] font-semibold text-violet-900">Policy ready to publish</span>
+        </div>
+        <button class="h-8 px-3 text-[12px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800">Review full policy</button>
+      </div>
+      <p class="text-[12px] text-violet-800 mt-1">All 4 sections drafted. Review the assembled policy or continue editing individual sections.</p>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="w-[280px] border-l border-neutral-200 bg-white p-4 min-h-[calc(100vh-100px)]">
+    <h3 class="text-[13px] font-semibold text-neutral-900 mb-3">Template setup</h3>
+    <div class="space-y-3">
+
+      <div class="p-3 border border-neutral-200 rounded-md">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Formatting</span>
+          <button onclick="openFormatting()" class="text-[11px] text-neutral-600 hover:text-neutral-900">Edit</button>
+        </div>
+        <div class="space-y-1 text-[12px]">
+          <div class="flex justify-between"><span class="text-neutral-500">Tone</span><span id="sidebar-tone" class="text-neutral-900">Professional</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Length</span><span id="sidebar-length" class="text-neutral-900">Balanced</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Probing</span><span id="sidebar-probing" class="text-neutral-900">Moderate</span></div>
+        </div>
+      </div>
+
+      <div class="p-3 border border-neutral-200 rounded-md">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Connected tools</span>
+          <button onclick="openActionPicker()" class="text-[11px] text-neutral-600 hover:text-neutral-900">Edit</button>
+        </div>
+        <div id="sidebar-tools" class="space-y-1.5"></div>
+      </div>
+
+      <div class="p-3 border border-dashed border-neutral-300 rounded-md bg-neutral-50/50">
+        <p class="text-[11.5px] text-neutral-600 leading-relaxed"><strong class="text-neutral-900">Tip:</strong> Generated drafts pull from your tool list, so the more relevant tools you connect, the more grounded your policy becomes.</p>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- FORMATTING MODAL -->
+<div id="modal-formatting" class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-neutral-900/40 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto" id="formatting-modal-inner">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 sticky top-0 bg-white">
+      <h3 class="text-[14px] font-semibold text-neutral-900">Formatting preferences</h3>
+      <button onclick="closeFormatting()" class="p-1 hover:bg-neutral-100 rounded"><i data-lucide="x" class="w-4 h-4 text-neutral-500"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-[12px] text-neutral-500 mb-4">These preferences shape how each section is drafted. Change anytime and regenerate.</p>
+
+      <div class="mb-3">
+        <label class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">Tone</label>
+        <div class="flex gap-1.5 flex-wrap" id="tone-options"></div>
+        <p class="text-[11px] text-neutral-500 mt-1.5">How the agent comes across to customers.</p>
+      </div>
+
+      <div class="mb-3">
+        <label class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">Length</label>
+        <div class="flex gap-1.5 flex-wrap" id="length-options"></div>
+        <p class="text-[11px] text-neutral-500 mt-1.5">Density of generated drafts.</p>
+      </div>
+
+      <div class="mb-3">
+        <label class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">Probing</label>
+        <div class="flex gap-1.5 flex-wrap" id="probing-options"></div>
+        <p class="text-[11px] text-neutral-500 mt-1.5">How much the agent will ask before resolving or escalating.</p>
+      </div>
+
+      <!-- Custom rules -->
+      <div class="mt-4">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">Custom rules</label>
+          <button onclick="toggleCustomRules()" id="expand-btn" class="text-[11px] text-neutral-600 hover:text-neutral-900 flex items-center gap-1">
+            <i data-lucide="maximize-2" class="w-3 h-3"></i> <span id="expand-label">Expand</span>
+          </button>
+        </div>
+
+        <!-- Collapsed view -->
+        <div id="custom-rules-collapsed">
+          <textarea id="custom-notes-small" rows="3" placeholder="e.g. Always confirm customer email before issuing credit. Use bullet points for multi-step responses."
+            class="w-full text-[13px] border border-neutral-200 rounded-md p-2.5 resize-none"
+            oninput="syncCustomNotes(this.value)"></textarea>
+        </div>
+
+        <!-- Expanded view -->
+        <div id="custom-rules-expanded" class="hidden border border-neutral-200 rounded-md overflow-hidden">
+          <textarea id="custom-notes-large" rows="6" placeholder="Add your own formatting rules, or click any common rule below to insert it."
+            class="w-full text-[13px] p-3 resize-none border-b border-neutral-200"
+            oninput="syncCustomNotes(this.value)"></textarea>
+          <div class="bg-neutral-50/50 p-3">
+            <div class="text-[10.5px] font-semibold text-neutral-500 uppercase tracking-wide mb-2">Common formatting rules</div>
+            <div class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1" id="common-rules-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-neutral-100">
+        <button onclick="closeFormatting()" class="h-8 px-3 text-[12px] font-medium border border-neutral-200 rounded-md hover:bg-neutral-50">Cancel</button>
+        <button onclick="saveFormatting()" class="h-8 px-3 text-[12px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800">Save preferences</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTION PICKER MODAL -->
+<div id="modal-actions" class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-neutral-900/40 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 sticky top-0 bg-white">
+      <h3 class="text-[14px] font-semibold text-neutral-900">Connect tools, actions and CVs</h3>
+      <button onclick="closeActionPicker()" class="p-1 hover:bg-neutral-100 rounded"><i data-lucide="x" class="w-4 h-4 text-neutral-500"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-[12px] text-neutral-500 mb-3">Selected tools are referenced by name in generated drafts. Pick the ones relevant to this flow.</p>
+      <div class="relative mb-3">
+        <i data-lucide="search" class="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+        <input id="action-search" placeholder="Search actions, subflows, CVs..." oninput="filterActions(this.value)"
+          class="w-full h-8 pl-8 pr-3 text-[12.5px] border border-neutral-200 rounded-md" />
+      </div>
+      <div class="space-y-1 max-h-[300px] overflow-y-auto pr-1" id="action-list"></div>
+      <div class="flex items-center justify-between mt-4 pt-4 border-t border-neutral-100">
+        <span class="text-[12px] text-neutral-600" id="selected-count">2 selected</span>
+        <button onclick="closeActionPicker()" class="h-8 px-3 text-[12px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VERSIONS MODAL -->
+<div id="modal-versions" class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-neutral-900/40 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 sticky top-0 bg-white">
+      <h3 id="versions-modal-title" class="text-[14px] font-semibold text-neutral-900">Version history</h3>
+      <button onclick="closeVersions()" class="p-1 hover:bg-neutral-100 rounded"><i data-lucide="x" class="w-4 h-4 text-neutral-500"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-[12px] text-neutral-500 mb-4">Each generation is saved automatically. Restore a previous draft or compare across versions.</p>
+      <div id="versions-list" class="space-y-2"></div>
+      <div class="flex justify-end mt-4 pt-4 border-t border-neutral-100">
+        <button onclick="closeVersions()" class="h-8 px-3 text-[12px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- A/B TEST MODAL -->
+<div id="modal-abtest" class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-neutral-900/40 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 sticky top-0 bg-white">
+      <h3 id="abtest-modal-title" class="text-[14px] font-semibold text-neutral-900">A/B test</h3>
+      <button onclick="closeAbTest()" class="p-1 hover:bg-neutral-100 rounded"><i data-lucide="x" class="w-4 h-4 text-neutral-500"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-[12px] text-neutral-500 mb-4">Run two versions of this section live and compare resolution rate, escalation rate, and CSAT.</p>
+      <div class="space-y-3">
+        <div class="p-3 border border-neutral-200 rounded-md">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded bg-violet-100 text-violet-700 text-[11px] font-semibold flex items-center justify-center">A</div>
+              <span class="text-[13px] font-semibold text-neutral-900">Variant A — Current</span>
+            </div>
+            <span class="text-[11px] text-neutral-500">50% traffic</span>
+          </div>
+          <p class="text-[11.5px] text-neutral-600">Latest drafted version</p>
+        </div>
+        <div class="p-3 border border-dashed border-neutral-300 rounded-md bg-neutral-50/50">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded bg-indigo-100 text-indigo-700 text-[11px] font-semibold flex items-center justify-center">B</div>
+              <span class="text-[13px] font-semibold text-neutral-900">Variant B</span>
+            </div>
+            <span class="text-[11px] text-neutral-500">50% traffic</span>
+          </div>
+          <select id="ab-version-select" class="w-full h-8 text-[12px] border border-neutral-200 rounded px-2 bg-white">
+            <option>Choose a version to test against...</option>
+            <option>Generate new variant</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-4 p-3 bg-neutral-50 rounded-md">
+        <div class="text-[10.5px] font-semibold text-neutral-500 uppercase tracking-wide mb-2">Test settings</div>
+        <div class="space-y-1.5 text-[12px]">
+          <div class="flex justify-between"><span class="text-neutral-600">Duration</span><span class="text-neutral-900">7 days</span></div>
+          <div class="flex justify-between"><span class="text-neutral-600">Min sample size</span><span class="text-neutral-900">200 conversations / variant</span></div>
+          <div class="flex justify-between"><span class="text-neutral-600">Primary metric</span><span class="text-neutral-900">Resolution rate</span></div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-neutral-100">
+        <button onclick="closeAbTest()" class="h-8 px-3 text-[12px] font-medium border border-neutral-200 rounded-md hover:bg-neutral-50">Cancel</button>
+        <button onclick="closeAbTest()" class="h-8 px-3 text-[12px] font-medium bg-neutral-900 text-white rounded-md hover:bg-neutral-800 flex items-center gap-1.5">
+          <i data-lucide="flask-conical" class="w-3 h-3"></i> Start test
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const sections = [
+  {
+    id: "objective", label: "Objective", number: "01", icon: "target",
+    placeholder: "Describe the goal of this flow. Should it fully resolve the issue, troubleshoot before escalating, or hand off to a human agent right away? What does success look like for the customer?",
+    inputPlaceholder: "e.g. Resolve missing rewards points issues end to end. If the points are eligible but not credited, issue them automatically. If we can't verify eligibility within 2 turns, escalate to a live agent.",
+  },
+  {
+    id: "context", label: "Context", number: "02", icon: "book-open",
+    placeholder: "Background the agent needs to understand. Common reasons this issue happens, relevant policies, team procedures, and any business context that shapes the right response.",
+    inputPlaceholder: "e.g. Rewards points typically post within 48 hours of a qualifying purchase. Common causes: returned items, non-qualifying SKUs, account tier changes. Our team verifies via the rewards lookup tool first, then checks order history.",
+  },
+  {
+    id: "instructions", label: "Instructions", number: "03", icon: "list-checks",
+    placeholder: "The step by step process the agent should follow. Include which actions to call, what to ask the customer, and how to interpret responses.",
+    inputPlaceholder: "e.g. 1) Ask for the order number or date of purchase. 2) Run Check Reward Status. 3) If status shows pending, let customer know it can take 48hrs. 4) If missing, run Lookup Order History to verify eligibility. 5) If eligible, issue credit.",
+  },
+  {
+    id: "rules", label: "Rules", number: "04", icon: "shield-alert",
+    placeholder: "Hard constraints, edge cases, and things the agent should never do. What requires human escalation? What are the limits on what can be auto-resolved?",
+    inputPlaceholder: "e.g. Never issue more than 5000 points without human approval. Always escalate VIP tier customers. Never promise points for non-qualifying purchases. If customer is upset or mentions cancellation, escalate immediately.",
+  },
+];
+
+const mockDrafts = {
+  objective: `**Primary Goal:** Fully resolve missing rewards points issues without human escalation when eligibility can be confirmed.
+
+**Resolution Path:**
+- Auto-resolve when points are verifiably owed and within auto-credit thresholds
+- Troubleshoot through up to 2 verification turns before escalating
+- Escalate immediately for VIP tier accounts or unresolved eligibility
+
+**Success Criteria:** Customer leaves with either credited points, a clear timeline (48hr pending window), or a warm handoff to a live agent.`,
+
+  context: `**Background:** Rewards points post within 48 hours of qualifying purchases. Customers often reach out before this window completes.
+
+**Common Root Causes:**
+- Pending posting window not yet elapsed (most common)
+- Returned or partially refunded items
+- Non-qualifying SKUs (gift cards, taxes, shipping)
+- Recent account tier change affecting multiplier
+- Promotional points pending review
+
+**Standard Team Procedure:** Verify via Check Reward Status first. If status is missing rather than pending, confirm purchase eligibility through Lookup Order History before issuing credit.
+
+**Tier Considerations:** VIP and Platinum members receive priority routing and have higher auto-credit thresholds.`,
+
+  instructions: `**Step 1 — Gather purchase details**
+Ask the customer for the order number or approximate purchase date. If they have neither, ask for the email on file.
+
+**Step 2 — Check current status**
+Run \`Check Reward Status\` with the customer's identifier.
+- If status is \`pending\`, inform the customer points typically post within 48 hours and confirm the expected post date.
+- If status is \`posted\`, walk the customer through where to view them in their account.
+- If status is \`missing\` or \`not_found\`, proceed to Step 3.
+
+**Step 3 — Verify eligibility**
+Run \`Lookup Order History\` to confirm the purchase qualifies.
+- Confirm SKUs are reward-eligible
+- Confirm no return or refund was processed
+- Confirm account tier at time of purchase
+
+**Step 4 — Resolve**
+If eligible and within auto-credit threshold, run \`Issue Reward Credit\` and confirm with the customer. If outside threshold or eligibility is unclear after 2 turns, hand off via \`Rewards Issue Handoff\`.`,
+
+  rules: `**Hard Limits**
+- Never issue more than 5,000 points without human approval
+- Never promise points for non-qualifying purchases (gift cards, shipping, taxes)
+- Never credit points for returned or refunded items
+
+**Mandatory Escalations**
+- VIP and Platinum tier customers, regardless of issue size
+- Any mention of account cancellation or churn intent
+- Disputes involving more than one transaction
+- Customer expresses frustration or uses negative sentiment markers
+
+**Tone & Boundaries**
+- Do not speculate on why points are missing before running verification actions
+- Do not commit to timelines beyond the documented 48-hour window
+- Do not share internal SKU eligibility rules verbatim`,
+};
+
+const mockVersions = {
+  objective: [
+    { id: "v3", label: "v3 (current)", date: "2 mins ago", note: "Tightened escalation criteria", current: true },
+    { id: "v2", label: "v2", date: "1 hour ago", note: "Added VIP tier handling" },
+    { id: "v1", label: "v1", date: "Yesterday", note: "Initial generation" },
+  ],
+  context: [
+    { id: "v2", label: "v2 (current)", date: "5 mins ago", note: "Added tier multiplier context", current: true },
+    { id: "v1", label: "v1", date: "Yesterday", note: "Initial generation" },
+  ],
+  instructions: [
+    { id: "v1", label: "v1 (current)", date: "Just now", note: "Initial generation", current: true },
+  ],
+  rules: [
+    { id: "v1", label: "v1 (current)", date: "Just now", note: "Initial generation", current: true },
+  ],
+};
+
+const availableActions = [
+  { name: "Check Reward Status", type: "API", icon: "zap" },
+  { name: "Issue Reward Credit", type: "API", icon: "zap" },
+  { name: "Lookup Order History", type: "API", icon: "zap" },
+  { name: "Verify Account Tier", type: "API", icon: "zap" },
+  { name: "Rewards Issue Handoff", type: "Subflow", icon: "git-branch" },
+  { name: "Offer Type Identifier", type: "Subflow", icon: "git-branch" },
+  { name: "Customer Sentiment CV", type: "CV", icon: "layers" },
+  { name: "Issue Severity CV", type: "CV", icon: "layers" },
+];
+
+const commonFormattingRules = [
+  { label: "Always confirm customer email before issuing credit", category: "Verification" },
+  { label: "Use bullet points for any response with 3+ steps", category: "Structure" },
+  { label: "Reference order numbers in monospace formatting", category: "Structure" },
+  { label: "Lead responses with the resolution, not the diagnosis", category: "Structure" },
+  { label: "Acknowledge frustration before troubleshooting", category: "Tone" },
+  { label: "Avoid hedging language (maybe, possibly, might)", category: "Tone" },
+  { label: "Use customer's first name once per conversation", category: "Tone" },
+  { label: "Cap responses at 3 sentences unless explaining a process", category: "Length" },
+  { label: "Never reveal internal action names to the customer", category: "Boundaries" },
+  { label: "Always offer a human handoff after 3 unresolved turns", category: "Escalation" },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let state = {
+  activeSectionId: "objective",
+  drafts: { objective: "", context: "", instructions: "", rules: "" },
+  inputs: { objective: "", context: "", instructions: "", rules: "" },
+  formatting: { tone: "Professional", length: "Balanced", probing: "Moderate", customNotes: "" },
+  selectedActions: ["Check Reward Status", "Issue Reward Credit"],
+  customRulesExpanded: false,
+  currentVersionsSectionId: null,
+  currentAbTestSectionId: null,
+};
+
+// ─── SECTION RENDERING ────────────────────────────────────────────────────────
+
+function renderSections() {
+  const container = document.getElementById("sections-container");
+  container.innerHTML = "";
+  sections.forEach(s => {
+    const hasDraft = !!state.drafts[s.id];
+    const isActive = state.activeSectionId === s.id;
+    const vCount = hasDraft ? mockVersions[s.id].length : 0;
+
+    const el = document.createElement("div");
+    el.id = `section-card-${s.id}`;
+    el.className = `bg-white border rounded-lg overflow-hidden transition-all ${isActive ? "border-neutral-900 shadow-sm" : "border-neutral-200"}`;
+
+    el.innerHTML = `
+      <!-- Header -->
+      <div class="w-full px-4 py-3 flex items-center gap-3 hover:bg-neutral-50/50 cursor-pointer" onclick="toggleSection('${s.id}')">
+        <span class="text-[11px] font-mono text-neutral-400">${s.number}</span>
+        <div class="w-7 h-7 rounded-md flex items-center justify-center ${hasDraft ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-600"}">
+          ${hasDraft
+            ? `<i data-lucide="check" class="w-3.5 h-3.5"></i>`
+            : `<i data-lucide="${s.icon}" class="w-3.5 h-3.5"></i>`
+          }
+        </div>
+        <span class="text-[14px] font-semibold text-neutral-900 flex-1 text-left">${s.label}</span>
+        ${hasDraft ? `<span class="text-[10px] font-medium px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded uppercase tracking-wide">Drafted</span>` : ""}
+        ${hasDraft ? `
+          <div class="flex items-center gap-0.5" onclick="event.stopPropagation()">
+            <button onclick="openVersions('${s.id}')" title="Version history" class="h-7 px-2 text-[11px] font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded flex items-center gap-1">
+              <i data-lucide="history" class="w-3 h-3"></i>
+              <span>v${vCount}</span>
+            </button>
+            <button onclick="openAbTest('${s.id}')" title="A/B test" class="h-7 px-2 text-[11px] font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded flex items-center gap-1">
+              <i data-lucide="flask-conical" class="w-3 h-3"></i>
+              <span>A/B</span>
+            </button>
+          </div>` : ""}
+        <button onclick="event.stopPropagation(); toggleSection('${s.id}')" class="p-1 hover:bg-neutral-100 rounded">
+          <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-400 chevron-icon ${isActive ? "rotated" : ""}"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="section-body ${isActive ? "open" : ""} border-t border-neutral-100 p-4 space-y-3">
+        <!-- Hint -->
+        <div class="flex items-start gap-2 px-3 py-2 bg-neutral-50 rounded-md border border-neutral-100">
+          <i data-lucide="help-circle" class="w-3.5 h-3.5 text-neutral-400 mt-0.5 flex-shrink-0"></i>
+          <p class="text-[12px] text-neutral-500 leading-relaxed">${s.placeholder}</p>
+        </div>
+        <!-- Notes input -->
+        <div>
+          <label class="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-1.5 block">Your notes</label>
+          <textarea id="input-${s.id}" rows="4" placeholder="${s.inputPlaceholder}"
+            class="w-full text-[13px] text-neutral-900 placeholder:text-neutral-400 border border-neutral-200 rounded-md p-3 resize-none leading-relaxed"
+            oninput="state.inputs['${s.id}'] = this.value">${state.inputs[s.id]}</textarea>
+        </div>
+        <!-- Generate row -->
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] text-neutral-500" id="tools-note-${s.id}">Drafts using your notes, formatting prefs, and ${state.selectedActions.length} connected tool${state.selectedActions.length === 1 ? "" : "s"}.</p>
+          <button id="gen-btn-${s.id}" onclick="generate('${s.id}')"
+            class="h-8 px-3 text-[12px] font-medium bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-md hover:from-violet-700 hover:to-indigo-700 flex items-center gap-1.5">
+            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
+            <span>${hasDraft ? "Regenerate" : "Generate"} ${s.label}</span>
+          </button>
+        </div>
+        <!-- Draft output -->
+        <div id="draft-${s.id}" class="${hasDraft ? "" : "hidden"} mt-2 border border-violet-100 bg-violet-50/30 rounded-md">
+          <div class="px-3 py-2 border-b border-violet-100 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3 h-3 text-violet-600"></i>
+              <span class="text-[10px] font-semibold text-violet-700 uppercase tracking-wide">Generated draft</span>
+            </div>
+            <button onclick="clearDraft('${s.id}')" class="text-[11px] text-neutral-500 hover:text-neutral-900">Clear</button>
+          </div>
+          <div id="draft-content-${s.id}" class="p-3 text-[13px] text-neutral-800 leading-relaxed"></div>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(el);
+    if (hasDraft) renderDraftContent(s.id, state.drafts[s.id]);
+  });
+
+  lucide.createIcons();
+}
+
+function renderDraftContent(sectionId, text) {
+  const el = document.getElementById(`draft-content-${sectionId}`);
+  if (!el) return;
+  const lines = text.split("\n");
+  el.innerHTML = lines.map(line => {
+    if (/^\*\*(.+)\*\*$/.test(line)) {
+      return `<div class="font-semibold text-neutral-900 text-[13px] mt-2 mb-1">${line.replace(/\*\*/g, "")}</div>`;
+    }
+    if (line.startsWith("- ")) {
+      return `<div class="text-[12.5px] text-neutral-700 ml-3 leading-relaxed">• ${line.slice(2)}</div>`;
+    }
+    let html = line
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-neutral-900 font-semibold">$1</strong>')
+      .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 bg-neutral-200/60 rounded text-[11.5px] font-mono">$1</code>');
+    return `<div class="text-[12.5px] text-neutral-700 leading-relaxed">${html || "&nbsp;"}</div>`;
+  }).join("");
+}
+
+// ─── SECTION TOGGLE ──────────────────────────────────────────────────────────
+
+function toggleSection(id) {
+  state.activeSectionId = state.activeSectionId === id ? null : id;
+  renderSections();
+}
+
+// ─── GENERATE ────────────────────────────────────────────────────────────────
+
+function generate(id) {
+  const btn = document.getElementById(`gen-btn-${id}`);
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 spin"></i> Generating`;
+  lucide.createIcons({ nodes: [btn] });
+
+  setTimeout(() => {
+    state.drafts[id] = mockDrafts[id];
+    renderSections();
+    updateProgress();
+    updateSidebar();
+  }, 1400);
+}
+
+function clearDraft(id) {
+  state.drafts[id] = "";
+  renderSections();
+  updateProgress();
+}
+
+// ─── PROGRESS ────────────────────────────────────────────────────────────────
+
+function updateProgress() {
+  const count = Object.values(state.drafts).filter(Boolean).length;
+  document.getElementById("progress-badge").textContent = `${count}/4`;
+  sections.forEach(s => {
+    const bar = document.getElementById(`bar-${s.id}`);
+    if (bar) bar.className = `h-1 flex-1 rounded-full ${state.drafts[s.id] ? "bg-emerald-500" : "bg-neutral-200"}`;
+  });
+  document.getElementById("final-banner").className = count === 4 ? "mt-6 p-4 bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-lg" : "hidden mt-6 p-4 bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 rounded-lg";
+}
+
+// ─── FORMATTING MODAL ────────────────────────────────────────────────────────
+
+function openFormatting() {
+  renderFormattingOptions();
+  renderCommonRules();
+  document.getElementById("custom-notes-small").value = state.formatting.customNotes;
+  document.getElementById("custom-notes-large").value = state.formatting.customNotes;
+  document.getElementById("modal-formatting").classList.add("open");
+}
+
+function closeFormatting() {
+  document.getElementById("modal-formatting").classList.remove("open");
+}
+
+function saveFormatting() {
+  updateSidebar();
+  closeFormatting();
+}
+
+function renderFormattingOptions() {
+  renderPillGroup("tone-options", ["Professional","Friendly","Direct","Empathetic"], state.formatting.tone, v => { state.formatting.tone = v; renderFormattingOptions(); });
+  renderPillGroup("length-options", ["Concise","Balanced","Thorough"], state.formatting.length, v => { state.formatting.length = v; renderFormattingOptions(); });
+  renderPillGroup("probing-options", ["Minimal","Moderate","Aggressive"], state.formatting.probing, v => { state.formatting.probing = v; renderFormattingOptions(); });
+}
+
+function renderPillGroup(containerId, options, current, onChange) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.className = `h-7 px-2.5 text-[12px] font-medium rounded-md border ${opt === current ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 text-neutral-700 hover:bg-neutral-50"}`;
+    btn.onclick = () => onChange(opt);
+    c.appendChild(btn);
+  });
+}
+
+function toggleCustomRules() {
+  state.customRulesExpanded = !state.customRulesExpanded;
+  document.getElementById("custom-rules-collapsed").classList.toggle("hidden", state.customRulesExpanded);
+  document.getElementById("custom-rules-expanded").classList.toggle("hidden", !state.customRulesExpanded);
+  document.getElementById("expand-label").textContent = state.customRulesExpanded ? "Collapse" : "Expand";
+  const modal = document.getElementById("formatting-modal-inner");
+  modal.className = `bg-white rounded-lg shadow-xl w-full ${state.customRulesExpanded ? "max-w-2xl" : "max-w-md"} max-h-[85vh] overflow-y-auto`;
+  renderCommonRules();
+  lucide.createIcons();
+}
+
+function syncCustomNotes(val) {
+  state.formatting.customNotes = val;
+  document.getElementById("custom-notes-small").value = val;
+  document.getElementById("custom-notes-large").value = val;
+  renderCommonRules();
+}
+
+function renderCommonRules() {
+  const container = document.getElementById("common-rules-list");
+  if (!container) return;
+  const categories = [...new Set(commonFormattingRules.map(r => r.category))];
+  container.innerHTML = categories.map(cat => {
+    const rules = commonFormattingRules.filter(r => r.category === cat);
+    return `
+      <div>
+        <div class="text-[10px] font-medium text-neutral-400 uppercase tracking-wider mb-1">${cat}</div>
+        <div class="space-y-1">
+          ${rules.map(rule => {
+            const added = state.formatting.customNotes.includes(rule.label);
+            return `<button onclick="addFormattingRule('${rule.label.replace(/'/g, "\\'")}')" ${added ? "disabled" : ""}
+              class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-[12px] ${added ? "text-neutral-400 bg-neutral-100 cursor-default" : "text-neutral-700 hover:bg-white hover:border hover:border-neutral-200 border border-transparent"}">
+              <i data-lucide="${added ? "check" : "plus"}" class="w-3 h-3 ${added ? "text-emerald-600" : "text-neutral-400"} flex-shrink-0"></i>
+              <span class="flex-1">${rule.label}</span>
+            </button>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }).join("");
+  lucide.createIcons();
+}
+
+function addFormattingRule(label) {
+  const next = state.formatting.customNotes ? `${state.formatting.customNotes}\n- ${label}` : `- ${label}`;
+  syncCustomNotes(next);
+}
+
+// ─── ACTION PICKER ───────────────────────────────────────────────────────────
+
+function openActionPicker() {
+  document.getElementById("action-search").value = "";
+  renderActionList("");
+  document.getElementById("modal-actions").classList.add("open");
+}
+
+function closeActionPicker() {
+  document.getElementById("modal-actions").classList.remove("open");
+  updateSidebar();
+  // update tools count labels
+  document.getElementById("tools-label").textContent = `Tools (${state.selectedActions.length})`;
+  sections.forEach(s => {
+    const el = document.getElementById(`tools-note-${s.id}`);
+    if (el) el.textContent = `Drafts using your notes, formatting prefs, and ${state.selectedActions.length} connected tool${state.selectedActions.length === 1 ? "" : "s"}.`;
+  });
+}
+
+function filterActions(q) {
+  renderActionList(q.toLowerCase());
+}
+
+function renderActionList(filter) {
+  const list = document.getElementById("action-list");
+  const filtered = availableActions.filter(a => a.name.toLowerCase().includes(filter) || a.type.toLowerCase().includes(filter));
+  list.innerHTML = filtered.map(action => {
+    const selected = state.selectedActions.includes(action.name);
+    return `<button onclick="toggleAction('${action.name}')"
+      class="w-full flex items-center gap-2.5 p-2.5 rounded-md border text-left mb-1 ${selected ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:bg-neutral-50"}">
+      <div class="w-7 h-7 rounded bg-white border border-neutral-200 flex items-center justify-center">
+        <i data-lucide="${action.icon}" class="w-3.5 h-3.5 text-neutral-700"></i>
+      </div>
+      <div class="flex-1">
+        <div class="text-[12.5px] font-medium text-neutral-900">${action.name}</div>
+        <div class="text-[10.5px] text-neutral-500 uppercase tracking-wide">${action.type}</div>
+      </div>
+      <div class="w-4 h-4 rounded border flex items-center justify-center ${selected ? "border-neutral-900 bg-neutral-900" : "border-neutral-300"}">
+        ${selected ? `<i data-lucide="check" class="w-2.5 h-2.5 text-white"></i>` : ""}
+      </div>
+    </button>`;
+  }).join("");
+  document.getElementById("selected-count").textContent = `${state.selectedActions.length} selected`;
+  lucide.createIcons();
+}
+
+function toggleAction(name) {
+  if (state.selectedActions.includes(name)) {
+    state.selectedActions = state.selectedActions.filter(a => a !== name);
+  } else {
+    state.selectedActions.push(name);
+  }
+  renderActionList(document.getElementById("action-search").value.toLowerCase());
+}
+
+// ─── VERSIONS MODAL ──────────────────────────────────────────────────────────
+
+function openVersions(sectionId) {
+  state.currentVersionsSectionId = sectionId;
+  const sec = sections.find(s => s.id === sectionId);
+  document.getElementById("versions-modal-title").textContent = `${sec.label} version history`;
+  renderVersionsList(sectionId);
+  document.getElementById("modal-versions").classList.add("open");
+}
+
+function closeVersions() {
+  document.getElementById("modal-versions").classList.remove("open");
+}
+
+function renderVersionsList(sectionId) {
+  const versions = mockVersions[sectionId];
+  const list = document.getElementById("versions-list");
+  list.innerHTML = versions.map(v => `
+    <div class="p-3 rounded-md border ${v.current ? "border-neutral-900 bg-neutral-50" : "border-neutral-200"}">
+      <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-2">
+          <span class="text-[13px] font-semibold text-neutral-900">${v.label}</span>
+          ${v.current ? `<span class="text-[9.5px] font-medium px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded uppercase tracking-wide">Live</span>` : ""}
+        </div>
+        <span class="text-[11px] text-neutral-500">${v.date}</span>
+      </div>
+      <p class="text-[12px] text-neutral-600 mb-2">${v.note}</p>
+      <div class="flex items-center gap-1.5">
+        ${!v.current ? `
+          <button class="h-6 px-2 text-[11px] font-medium border border-neutral-200 rounded hover:bg-white">Restore</button>
+          <button class="h-6 px-2 text-[11px] font-medium border border-neutral-200 rounded hover:bg-white">Compare</button>
+        ` : ""}
+        <button class="h-6 px-2 text-[11px] font-medium text-neutral-600 hover:text-neutral-900">Preview</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+// ─── A/B TEST MODAL ──────────────────────────────────────────────────────────
+
+function openAbTest(sectionId) {
+  state.currentAbTestSectionId = sectionId;
+  const sec = sections.find(s => s.id === sectionId);
+  document.getElementById("abtest-modal-title").textContent = `A/B test: ${sec.label}`;
+  const select = document.getElementById("ab-version-select");
+  const oldVersions = mockVersions[sectionId].filter(v => !v.current);
+  select.innerHTML = `<option>Choose a version to test against...</option>` +
+    oldVersions.map(v => `<option>${v.label} — ${v.note}</option>`).join("") +
+    `<option>Generate new variant</option>`;
+  document.getElementById("modal-abtest").classList.add("open");
+}
+
+function closeAbTest() {
+  document.getElementById("modal-abtest").classList.remove("open");
+}
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+
+function updateSidebar() {
+  document.getElementById("sidebar-tone").textContent = state.formatting.tone;
+  document.getElementById("sidebar-length").textContent = state.formatting.length;
+  document.getElementById("sidebar-probing").textContent = state.formatting.probing;
+
+  const toolsEl = document.getElementById("sidebar-tools");
+  if (state.selectedActions.length === 0) {
+    toolsEl.innerHTML = `<p class="text-[11.5px] text-neutral-400 italic">No tools selected</p>`;
+    return;
+  }
+  toolsEl.innerHTML = state.selectedActions.map(name => {
+    const meta = availableActions.find(a => a.name === name);
+    if (!meta) return "";
+    return `<div class="flex items-center gap-1.5 p-1.5 bg-neutral-50 rounded text-[11.5px]">
+      <div class="w-5 h-5 rounded bg-white border border-neutral-200 flex items-center justify-center">
+        <i data-lucide="${meta.icon}" class="w-2.5 h-2.5 text-neutral-600"></i>
+      </div>
+      <span class="text-neutral-800 truncate flex-1">${name}</span>
+      <span class="text-[9px] font-medium text-neutral-500 uppercase">${meta.type}</span>
+    </div>`;
+  }).join("");
+  lucide.createIcons();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+renderSections();
+updateProgress();
+updateSidebar();
+</script>
+</body>
+</html>
